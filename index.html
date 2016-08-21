@@ -1,403 +1,397 @@
 <!DOCTYPE>
 <html>
-    <head></head>
-    <body>
+<head></head>
+<body>
 
-    <canvas id="canvas" style="border: 1px solid #000;" width="610" height="500"></canvas>
+<canvas id="canvas" style="border: 1px solid #000;" width="610" height="500"></canvas>
 
-    <script>
-        var canvas = document.getElementById('canvas');
+<script>
+    var canvas = document.getElementById('canvas');
 
-        var getCoordonates = function (e) {
-            var x;
-            var y;
-            if (e.pageX || e.pageY) {
-              x = e.pageX;
-              y = e.pageY;
-            }
-            else {
-              x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-              y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
-            }
-
-            var obj = e.target || event.srcElement;
-
-            x -= obj.offsetLeft;
-            y -= obj.offsetTop;
-
-            return {
-                x: x,
-                y: y
-            }
+    var getCoordinates = function (e) {
+        var x;
+        var y;
+        if (e.pageX || e.pageY) {
+            x = e.pageX;
+            y = e.pageY;
+        }
+        else {
+            x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+            y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
         }
 
-        var centerX = 305;
-        var centerY = 205;
-        var rBig = 24;
-        var rSmall = 20;
-        var diamBig = rBig * 2;
-        var diamSmall = rSmall * 2;
+        var obj = e.target || event.srcElement;
 
-        var drag = false;
+        x -= obj.offsetLeft;
+        y -= obj.offsetTop;
 
-        var lastPos = null;
-        
-        var colordElements = [
-            '1-0-1',
-            '1-2-1',
-            '1-3-1'
-        ];
+        return {
+            x: x,
+            y: y
+        }
+    };
 
-        var offsetCircles = {
-            c0: 0,
-            c1: 0,
-            c2: 0,
-            c3: 0,
-            c4: 0
+    var centerX = 305;
+    var centerY = 205;
+    var rBig = 24;
+    var rSmall = 20;
+    var diamBig = rBig * 2;
+    var diamSmall = rSmall * 2;
+
+    var drag = false;
+
+    var lastPos = null;
+
+    var colordElements = [
+        '1-0-1',
+        '1-2-1',
+        '1-3-1'
+    ];
+
+    var offsetCircles = {
+        c0: 0,
+        c1: 0,
+        c2: 0,
+        c3: 0,
+        c4: 0
+    };
+
+    var offsetBar = 0;
+    var offsetCircleBar = prevOffsetBar = 0;
+
+    var getAngle = function (coord) {
+        var x = coord.x - centerX;
+        var y = coord.y - centerY;
+        var angle = Math.atan(x / y) * 180 / Math.PI;
+
+        if (angle < 0) {
+            angle = angle + 180;
         }
 
-        var offsetBar = 0;
-        var offsetCircleBar = prevOffsetBar = 0;
-
-        var getAngle = function (coord) {
-            var x = coord.x - centerX;
-            var y = coord.y - centerY;
-            var angle = Math.atan(x/y)*180/Math.PI;
-
-            if(angle < 0) {
-                angle = angle + 180;
-            }
-
-            if(x < 0) {
-                angle = angle + 180;
-            }
-
-            return angle;
+        if (x < 0) {
+            angle = angle + 180;
         }
-        
-        var smallCircles = (function () {
-            var obj = {};
-            
-            var circlesList = [];
-            for(var i = 0; i < 4; i++) {
-                obj['c' + i] = [];
-                for(var j = 0; j < i * 4; j++) {
-                    obj['c' + i].push(0);
-                    circlesList.push(i + '-' + j);
-                }
-            }
-            // push middle element
-            obj.c0 = []
-            obj.c0.push(0);
-            circlesList.push('0-0');
-            // create last circle that will be used in bar
-            // this element will have a single element at most
-            obj.c4 = [null, null];
-            
-            for(var i = 0; i < colordElements.length; i++) {
-                var rand = Math.round(Math.random() * (circlesList.length - 1));
-                var selected = circlesList[rand].split('-');
-                obj['c' + selected[0]][selected[1]] = 1;
-                
-                // remove element from circlesList
-                circlesList[rand] = circlesList[circlesList.length - 1];
-                circlesList.pop();
-            }
-            
-            return obj;
-            
-        }());
-        
-        var enableClick = function (e) {
-            console.log('enable');
-            var coord = getCoordonates(e);
 
-            var x = coord.x - centerX;
-            var y = coord.y - centerY;
-            if(y <= (diamBig * 4.5) + offsetBar && y >= (diamBig * 3.5) + offsetBar && x <= rBig && x >= -rBig) {
-                drag = 'bar';
-                lastPos = {x: coord.x, y: coord.y - offsetBar};
-                canvas.onmousemove = captureMouse;
+        return angle;
+    };
+
+    var smallCircles = (function () {
+        var obj = {};
+        var i;
+
+        var circlesList = [];
+        for (i = 0; i < 4; i++) {
+            obj['c' + i] = [];
+            for (var j = 0; j < i * 4; j++) {
+                obj['c' + i].push(0);
+                circlesList.push(i + '-' + j);
+            }
+        }
+        // push middle element
+        obj.c0 = [];
+        obj.c0.push(0);
+        circlesList.push('0-0');
+        // create last circle that will be used in bar
+        // this element will have a single element at most
+        obj.c4 = [null, null];
+
+        for (i = 0; i < colordElements.length; i++) {
+            var rand = Math.round(Math.random() * (circlesList.length - 1));
+            var selected = circlesList[rand].split('-');
+            obj['c' + selected[0]][selected[1]] = 1;
+
+            // remove element from circlesList
+            circlesList[rand] = circlesList[circlesList.length - 1];
+            circlesList.pop();
+        }
+
+        return obj;
+
+    })();
+
+    var enableClick = function (e) {
+        console.log('enable');
+        var coord = getCoordinates(e);
+
+        var x = coord.x - centerX;
+        var y = coord.y - centerY;
+        if (y <= (diamBig * 4.5) + offsetBar && y >= (diamBig * 3.5) + offsetBar && x <= rBig && x >= -rBig) {
+            drag = 'bar';
+            lastPos = {x: coord.x, y: coord.y - offsetBar};
+            canvas.onmousemove = captureMouse;
+            return;
+        }
+
+        var r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+
+        if (r < diamBig * 3.5) {
+            var circle = Math.floor(((r - rBig) / diamBig)) + 1;
+
+            if (circle === 3 && offsetBar !== 0) {
+                return false;
+            }
+            drag = circle;
+            lastPos = getAngle(coord);
+            canvas.onmousemove = captureMouse;
+        }
+    };
+
+    var captureMouse = function (e) {
+        var coord = getCoordinates(e);
+
+        if (typeof drag === "number") {
+
+            var angle = getAngle(coord);
+
+            offsetCircles['c' + drag] += lastPos - angle;
+            lastPos = angle;
+        } else {
+
+            var tmpOffset = coord.y - lastPos.y;
+            if (tmpOffset > diamBig || tmpOffset < -diamBig) {
                 return;
             }
+            offsetBar = offsetCircleBar = tmpOffset;
 
-            var r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-            
-            if(r < diamBig * 3.5) {
-                var circle = Math.floor(((r - rBig) / diamBig)) + 1;
+            if (smallCircles['c4'][0] !== null) {
+                offsetCircleBar += diamBig;
+            }
 
-                if(circle === 3 && offsetBar !== 0) {
-                    return false;
-                }
-                drag = circle;
-                lastPos = getAngle(coord);
-                canvas.onmousemove = captureMouse;
+            if (smallCircles['c4'][1] !== null) {
+                offsetCircleBar -= diamBig;
             }
         }
 
-        var captureMouse = function (e) {
-            var coord = getCoordonates(e);
+        drawCanvas();
+    };
 
-            if(typeof drag === "number") {
+    var resetCircleOffset = function (offset, angle, circle) {
+        var moved = offset / angle;
+        var cKey = 'c' + circle;
+        var removed;
+        if (moved > 0) {
+            // move from tail to beginning
+            removed = smallCircles[cKey].splice(smallCircles[cKey].length - moved, moved);
+            smallCircles[cKey] = removed.concat(smallCircles[cKey]);
+        } else {
+            // move from beginning to tail
+            removed = smallCircles[cKey].splice(0, -moved);
+            smallCircles[cKey] = smallCircles[cKey].concat(removed);
+        }
+    };
 
-                var angle = getAngle(coord);
-                var diff = lastPos - angle;
+    var moveBarCirclesUp = function () {
 
-                offsetCircles['c' + drag] += diff;
-                lastPos = angle;
+
+        smallCircles['c4'][0] = smallCircles['c3'][9];
+        smallCircles['c3'][9] = smallCircles['c2'][6];
+        smallCircles['c2'][6] = smallCircles['c1'][3];
+        smallCircles['c1'][3] = smallCircles['c0'][0];
+        smallCircles['c0'][0] = smallCircles['c1'][1];
+        smallCircles['c1'][1] = smallCircles['c2'][2];
+        smallCircles['c2'][2] = smallCircles['c3'][3];
+        smallCircles['c3'][3] = smallCircles['c4'][1];
+        smallCircles['c4'][1] = null;
+    };
+
+    var moveBarCirclesDown = function () {
+        smallCircles['c4'][1] = smallCircles['c3'][3];
+        smallCircles['c3'][3] = smallCircles['c2'][2];
+        smallCircles['c2'][2] = smallCircles['c1'][1];
+        smallCircles['c1'][1] = smallCircles['c0'][0];
+        smallCircles['c0'][0] = smallCircles['c1'][3];
+        smallCircles['c1'][3] = smallCircles['c2'][6];
+        smallCircles['c2'][6] = smallCircles['c3'][9];
+        smallCircles['c3'][9] = smallCircles['c4'][0];
+        smallCircles['c4'][0] = null;
+    };
+
+    var resetBarOffset = function (offsetBar) {
+        switch (offsetBar) {
+            case 1:
+                console.log('jos');
+                if (smallCircles['c4'][0] !== null) {
+                    moveBarCirclesDown();
+                }
+                moveBarCirclesDown();
+                break;
+            case -1:
+                console.log('sus');
+                if (smallCircles['c4'][1] !== null) {
+                    moveBarCirclesUp();
+                }
+                moveBarCirclesUp();
+                break;
+            case 0:
+                if (smallCircles['c4'][0] !== null) {
+                    moveBarCirclesDown();
+                } else if (smallCircles['c4'][1] !== null) {
+                    moveBarCirclesUp();
+                }
+                console.log('centru');
+        }
+    };
+
+    var checkFinished = function () {
+        var element;
+        for (var i = 0; i < colordElements.length; i++) {
+            element = colordElements[i].split('-');
+            if (smallCircles['c' + element[0]][element[1]] !== parseInt(element[2], 10)) {
+                return false;
+            }
+        }
+        alert('finished');
+        return true;
+    };
+
+    var disableClick = function () {
+        if (drag) {
+
+            if (typeof drag === "number") {
+                var nrElements = drag * 4;
+                var angle = 360 / nrElements;
+
+                var tmpDiff = Math.round(offsetCircles['c' + drag] / angle);
+
+                offsetCircles['c' + drag] = (tmpDiff * angle) % 360;
+
+                resetCircleOffset(offsetCircles['c' + drag], angle, drag);
+                offsetCircles['c' + drag] = 0;
             } else {
-                
-                var tmpOffset = coord.y - lastPos.y;
-                if(tmpOffset > diamBig || tmpOffset < -diamBig) {
-                    return;
+                var absOffsetBar = Math.round(offsetBar / diamBig);
+                offsetBar = absOffsetBar * diamBig;
+                console.log(absOffsetBar + '-' + prevOffsetBar);
+                if (absOffsetBar !== prevOffsetBar) {
+                    resetBarOffset(absOffsetBar);
                 }
-                offsetBar = offsetCircleBar = tmpOffset;
-                
-                if(smallCircles['c4'][0] !== null) {
-                    offsetCircleBar += diamBig;
-                }
-                
-                if(smallCircles['c4'][1] !== null) {
-                    offsetCircleBar -= diamBig;
-                }
+                offsetCircleBar = 0;
+                prevOffsetBar = absOffsetBar;
             }
 
             drawCanvas();
+
+            drag = false;
+            console.log('disable');
+            canvas.onmousemove = null;
+
+            checkFinished();
         }
-        
-        var resetCircleOffset = function (offset, angle, circle) {
-            var moved = offset / angle;
-            var cKey = 'c' + circle;
-            if(moved > 0) {
-                // move from tail to begining
-                var removed = smallCircles[cKey].splice(smallCircles[cKey].length - moved, moved);
-                smallCircles[cKey] = removed.concat(smallCircles[cKey]);
+    };
+
+    canvas.onmousedown = enableClick;
+    canvas.onmouseup = disableClick;
+    canvas.onmouseout = disableClick;
+
+    //var color = 0;
+
+    var drawSmallCircle = function (x, y, color, ctx) {
+        ctx.beginPath();
+        ctx.arc(x, y, rSmall, 0, Math.PI * 2, false);
+        ctx.lineWidth = 0.4;
+        ctx.strokeStyle = '#efefef';
+        //color++;
+
+        var gradient = ctx.createRadialGradient(x - (rSmall / 2), y - (rSmall / 2), 0, x, y, rSmall);
+        gradient.addColorStop(0, "#FFFFFF");
+        if (color) {
+            gradient.addColorStop(1, "#ff0000");
+        } else {
+            gradient.addColorStop(1, "#000000");
+        }
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.stroke();
+    };
+
+    var drawSmallCirclesLine = function (circle, ratius, rotationOffset, ctx) {
+        var x, y, radians, angleOffset, degrees, color;
+
+        var elements = circle * 4 || 1;
+        angleOffset = (360 / elements);
+
+        for (var i = 0; i < elements; i++) {
+            color = smallCircles['c' + circle][i];
+            if (color === null) {
+                continue;
+            }
+            degrees = ((i * angleOffset) + rotationOffset);
+            radians = degrees * Math.PI / 180;
+            x = ratius * Math.cos(radians) + centerX;
+            if (degrees === 90 || degrees === 270 || elements === 1) {
+                y = ratius * Math.sin(radians) + centerY + offsetCircleBar;
             } else {
-                // move from begining to tail
-                var removed = smallCircles[cKey].splice(0, -moved);
-                smallCircles[cKey] = smallCircles[cKey].concat(removed);
+                y = ratius * Math.sin(radians) + centerY;
             }
+            //console.log(x + ' - ' + y + ' - ' + color);
+            drawSmallCircle(x, y, color, ctx);
         }
-        
-        var moveBarCirclesUp = function () {
-            smallCircles['c4'][0] = smallCircles['c3'][9];
-            smallCircles['c3'][9] = smallCircles['c2'][6];
-            smallCircles['c2'][6] = smallCircles['c1'][3];
-            smallCircles['c1'][3] = smallCircles['c0'][0];
-            smallCircles['c0'][0] = smallCircles['c1'][1];
-            smallCircles['c1'][1] = smallCircles['c2'][2];
-            smallCircles['c2'][2] = smallCircles['c3'][3];
-            smallCircles['c3'][3] = smallCircles['c4'][1];
-            smallCircles['c4'][1] = null;
-        }
-        
-        var moveBarCirclesDown = function () {
-            smallCircles['c4'][1] = smallCircles['c3'][3];
-            smallCircles['c3'][3] = smallCircles['c2'][2];
-            smallCircles['c2'][2] = smallCircles['c1'][1];
-            smallCircles['c1'][1] = smallCircles['c0'][0];
-            smallCircles['c0'][0] = smallCircles['c1'][3];
-            smallCircles['c1'][3] = smallCircles['c2'][6];
-            smallCircles['c2'][6] = smallCircles['c3'][9];
-            smallCircles['c3'][9] = smallCircles['c4'][0];
-            smallCircles['c4'][0] = null;
-        }
-        
-        var resetBarOffset = function (offsetBar) {
-            var prevOffset = 0;
-            if(smallCircles['c4'][0] !== null || smallCircles['c4'][1] !== null) {
-                prevOffset = 1;
-            }
-            switch(offsetBar) {
-                case 1:
-                    console.log('jos');
-                    if(smallCircles['c4'][0] !== null) {
-                        moveBarCirclesDown();
-                    }
-                    moveBarCirclesDown();
-                    break;
-                case -1:
-                    console.log('sus');
-                    if(smallCircles['c4'][1] !== null) {
-                        moveBarCirclesUp();
-                    }
-                    moveBarCirclesUp();
-                    break;
-                case 0:
-                    if(smallCircles['c4'][0] !== null) {
-                       moveBarCirclesDown();
-                    } else if(smallCircles['c4'][1] !== null) {
-                        moveBarCirclesUp();
-                    }
-                    console.log('centru');
-            }
-        }    
-        
-        var checkFinished = function () {
-            var element;
-            for(var i = 0; i < colordElements.length; i++) {
-                element = colordElements[i].split('-');
-                if(smallCircles['c' + element[0]][element[1]] !== parseInt(element[2], 10)) {
-                    return false;
-                }
-            }
-            alert('finished');
-            return true;
-        }
-        
-        var disableClick = function (e) {
-            if(drag) {
+    };
 
-                if(typeof drag === "number") {
-                    var nrElements = drag * 4;
-                    var angle = 360 / nrElements;
+    var drawSmallCirclesOnBar = function (radius, ctx) {
 
-                    var tmpDiff = Math.round(offsetCircles['c' + drag] / angle);
-
-                    offsetCircles['c' + drag] = (tmpDiff * angle) % 360;
-                    
-                    resetCircleOffset(offsetCircles['c' + drag], angle, drag);
-                    offsetCircles['c' + drag] = 0;
-                } else {
-                    var absOffsetBar = Math.round(offsetBar / diamBig);
-                    offsetBar = absOffsetBar * diamBig;
-                    console.log(absOffsetBar + '-'+ prevOffsetBar);
-                    if(absOffsetBar !== prevOffsetBar) {
-                        resetBarOffset(absOffsetBar);
-                    }
-                    offsetCircleBar = 0;
-                    prevOffsetBar = absOffsetBar;
-                }
-                
-                drawCanvas();
-
-                drag = false;
-                console.log('disable');
-                canvas.onmousemove = null;
-                
-                checkFinished();
-            }
+        var color = smallCircles['c4'][1];
+        if (color !== null) {
+            drawSmallCircleAtAngle(90, radius, color, ctx);
         }
 
-        canvas.onmousedown = enableClick;
-        canvas.onmouseup = disableClick;
-        canvas.onmouseout = disableClick;
+        color = smallCircles['c4'][0];
+        if (color !== null) {
+            drawSmallCircleAtAngle(270, radius, color, ctx);
+        }
+    };
 
-        //var color = 0;
+    var drawSmallCircleAtAngle = function (angle, radius, color, ctx) {
+        var radians = angle * Math.PI / 180;
+        var x = radius * Math.cos(radians) + centerX;
+        var y = radius * Math.sin(radians) + centerY + offsetCircleBar;
 
-        var drawSmallCircle = function (x, y, color, ctx) {
+        drawSmallCircle(x, y, color, ctx);
+    };
+
+    var drawCanvas = function () {
+
+        var ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#cccccc';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + offsetBar, 3.5 * diamBig, Math.PI * 1.45, Math.PI * 1.55, false);
+        ctx.fillStyle = "black";
+        //ctx.fill();
+
+        ctx.arc(centerX, centerY + offsetBar, 3.5 * diamBig + diamBig, Math.PI * 0.46, Math.PI * 0.54, false);
+        ctx.lineWidth = 1;
+        ctx.fillStyle = "#cccccc";
+        ctx.fill();
+
+        var locR = 3.5 * diamBig,
+                i;
+        for (i = 1; i <= 4; i++) {
+
             ctx.beginPath();
-            ctx.arc(x, y, rSmall, 0, Math.PI*2, false);
-            ctx.lineWidth=0.4;
-            ctx.strokeStyle = '#efefef';
-            //color++;
-            
-            var gradient = ctx.createRadialGradient(x-(rSmall/2), y-(rSmall/2) , 0, x, y, rSmall);
-            gradient.addColorStop(0, "#FFFFFF");
-            if(color) {
-                gradient.addColorStop(1, "#ff0000");
-            } else {
-                gradient.addColorStop(1, "#000000");
-            }
-            ctx.fillStyle=gradient;
-            ctx.fill();
+            ctx.arc(centerX, centerY, locR, 0, Math.PI * 2, false);
+            ctx.lineWidth = 1;
+            ctx.fillStyle = "black";
             ctx.stroke();
+            locR -= diamBig;
         }
 
-        var drawSmallCirclesLine = function (circle, ratius, rotationOffset, ctx) {
-            var x, y, radians, angleOffset, degrees, color;
-//            if(circle == 4) {
-//                var elements = 2;
-//                angleOffset = 90;
-//            } else {
-                var elements = circle * 4 || 1;
-                angleOffset = (360/elements);
-            //}
-            //angleOffset = (360/elements);
-            for(var i = 0; i < elements; i++) {
-                color = smallCircles['c' + circle][i];
-                if(color === null) {
-                    continue;
-                }
-                degrees = ((i * angleOffset) + rotationOffset);
-                radians = degrees  * Math.PI/180;
-                x = ratius * Math.cos(radians) + centerX;
-                if(degrees === 90 || degrees === 270 || elements === 1) {
-                    y = ratius * Math.sin(radians) + centerY + offsetCircleBar;
-                } else {
-                    y = ratius * Math.sin(radians) + centerY;
-                }
-                //console.log(x + ' - ' + y + ' - ' + color);
-                drawSmallCircle(x, y, color, ctx);
-            }
+        var offsetCirclesRatio = rBig - rSmall;
+
+        var centerOffset;
+
+        for (i = 0; i <= 3; i++) {
+            centerOffset = (offsetCirclesRatio * (2 * i)) + (diamSmall * i);
+            drawSmallCirclesLine(i, centerOffset, offsetCircles['c' + i], ctx);
         }
 
-        var drawSmallCirclesOnBar = function (ratius, ctx) {
+        centerOffset = (offsetCirclesRatio * (2 * 4)) + (diamSmall * 4);
+        drawSmallCirclesOnBar(centerOffset, ctx);
 
-            var color = smallCircles['c4'][1];
-            
-            if(color !== null) {
-                var radians = 90 * Math.PI/180;
-                var x = ratius * Math.cos(radians) + centerX;
-                var y = ratius * Math.sin(radians) + centerY + offsetCircleBar;
-                
-                drawSmallCircle(x, y, color, ctx);
-            }
-            
-            var color = smallCircles['c4'][0];
-            if(color !== null) {
-                var radians = 270 * Math.PI/180;
-                var x = ratius * Math.cos(radians) + centerX;
-                var y = ratius * Math.sin(radians) + centerY + offsetCircleBar;
-                
-                drawSmallCircle(x, y, color, ctx);
-            }
-        }
+    };
 
-        var drawCanvas = function () {
-
-            var ctx = canvas.getContext('2d');
-
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.strokeStyle = '#cccccc';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY + offsetBar, 3.5 * diamBig, Math.PI * 1.45, Math.PI * 1.55, false);
-            ctx.fillStyle="black";
-            //ctx.fill();
-
-            ctx.arc(centerX, centerY + offsetBar, 3.5 * diamBig + diamBig, Math.PI * 0.46, Math.PI * 0.54, false);
-            ctx.lineWidth=1;
-            ctx.fillStyle="#cccccc";
-            ctx.fill();
-
-            var locR = 3.5 * diamBig, i;
-            for(i = 1; i <= 4; i++) {
-                
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, locR, 0, Math.PI*2, false);
-                ctx.lineWidth=1;
-                ctx.fillStyle="black";
-                ctx.stroke();
-                locR -= diamBig;
-            }
-            
-            
-
-            var offsetCirclesRatio = rBig - rSmall;
-
-            for(var i = 0; i <= 3; i++) {
-                var centerOffset = (offsetCirclesRatio * (2 * i)) + (diamSmall * i);
-                drawSmallCirclesLine(i, centerOffset, offsetCircles['c' + i], ctx);
-            }
-            
-            var centerOffset = (offsetCirclesRatio * (2 * 4)) + (diamSmall * 4);
-            drawSmallCirclesOnBar(centerOffset, ctx);
-            
-            //drawSmallCircle(x, y, color, ctx);
-            
-        };
-
-        drawCanvas();
-    </script>
-    </body>
+    drawCanvas();
+    // 401
+</script>
+</body>
 </html>
