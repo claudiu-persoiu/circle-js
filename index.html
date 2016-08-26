@@ -31,12 +31,9 @@
             y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
         }
 
-        x -= obj.offsetLeft;
-        y -= obj.offsetTop;
-
         return {
-            x: x,
-            y: y
+            x: x - obj.offsetLeft,
+            y: y - obj.offsetTop
         }
     };
 
@@ -69,16 +66,8 @@
     var offsetCircleBar = 0,
             prevOffsetBar = 0;
 
-    var getAngle = function (coordinates) {
-        var x = coordinates.x - centerX;
-        var y = coordinates.y - centerY;
-        var angle = Math.atan(x / y) * 180 / Math.PI;
-
-        if (angle < 0 || x < 0) {
-            angle = angle + 180;
-        }
-
-        return angle;
+    var getAngle = function (point) {
+        return -Math.atan2(point.y - centerY, point.x - centerX) * 180 / Math.PI;
     };
 
     var smallCircles = (function () {
