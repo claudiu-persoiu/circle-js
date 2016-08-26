@@ -8,8 +8,12 @@
 
 <script>
 
-    var getRadians = function (degrees) {
-        return degrees * Math.PI / 180;
+    var getPositionByAngle = function (angle, radius, centerX, centerY) {
+        var radians = angle * Math.PI / 180;
+        return {
+            x: radius * Math.cos(radians) + centerX,
+            y: radius * Math.sin(radians) + centerY
+        };
     };
 
     var canvas = document.getElementById('canvas');
@@ -62,18 +66,15 @@
     };
 
     var offsetBar = 0;
-    var offsetCircleBar = prevOffsetBar = 0;
+    var offsetCircleBar = 0,
+            prevOffsetBar = 0;
 
-    var getAngle = function (coord) {
-        var x = coord.x - centerX;
-        var y = coord.y - centerY;
+    var getAngle = function (coordinates) {
+        var x = coordinates.x - centerX;
+        var y = coordinates.y - centerY;
         var angle = Math.atan(x / y) * 180 / Math.PI;
 
-        if (angle < 0) {
-            angle = angle + 180;
-        }
-
-        if (x < 0) {
+        if (angle < 0 || x < 0) {
             angle = angle + 180;
         }
 
@@ -93,8 +94,7 @@
             }
         }
         // push middle element
-        obj.c0 = [];
-        obj.c0.push(0);
+        obj.c0 = [0];
         circlesList.push('0-0');
         // create last circle that will be used in bar
         // this element will have a single element at most
@@ -117,8 +117,8 @@
     var enableClick = function (e) {
         var coordinates = getCoordinates(e);
 
-        var x = coordinates.x - centerX;
-        var y = coordinates.y - centerY;
+        var x = coordinates.x - centerX,
+                y = coordinates.y - centerY;
         if (y <= (diamBig * 4.5) + offsetBar && y >= (diamBig * 3.5) + offsetBar && x <= rBig && x >= -rBig) {
             drag = 'bar';
             lastPos = {x: coordinates.x, y: coordinates.y - offsetBar};
@@ -281,27 +281,23 @@
     canvas.onmouseup = disableClick;
     canvas.onmouseout = disableClick;
 
-    var drawSmallCircle = function (x, y, color, ctx) {
+    var drawSmallCircle = function (position, color, ctx) {
         ctx.beginPath();
-        ctx.arc(x, y, rSmall, 0, Math.PI * 2, false);
+        ctx.arc(position.x, position.y, rSmall, 0, Math.PI * 2, false);
         ctx.lineWidth = 0.4;
         ctx.strokeStyle = '#efefef';
-        //color++;
 
-        var gradient = ctx.createRadialGradient(x - (rSmall / 2), y - (rSmall / 2), 0, x, y, rSmall);
+        var gradient = ctx.createRadialGradient(position.x - (rSmall / 2), position.y - (rSmall / 2), 0, position.x, position.y, rSmall);
         gradient.addColorStop(0, "#FFFFFF");
-        if (color) {
-            gradient.addColorStop(1, "#ff0000");
-        } else {
-            gradient.addColorStop(1, "#000000");
-        }
+        gradient.addColorStop(1, color ? "#ff0000" : "#000000");
+
         ctx.fillStyle = gradient;
         ctx.fill();
         ctx.stroke();
     };
 
     var drawSmallCirclesLine = function (circle, radius, rotationOffset, ctx) {
-        var x, y, radians, angleOffset, degrees, color;
+        var position, angleOffset, degrees, color;
 
         var elements = circle * 4 || 1;
         angleOffset = (360 / elements);
@@ -312,15 +308,13 @@
                 continue;
             }
             degrees = ((i * angleOffset) + rotationOffset);
-            radians = getRadians(degrees);
-            x = radius * Math.cos(radians) + centerX;
-            y = radius * Math.sin(radians) + centerY;
+            position = getPositionByAngle(degrees, radius, centerX, centerY);
 
             if (degrees === 90 || degrees === 270 || elements === 1) {
-                y += offsetCircleBar;
+                position.y += offsetCircleBar;
             }
 
-            drawSmallCircle(x, y, color, ctx);
+            drawSmallCircle(position, color, ctx);
         }
     };
 
@@ -338,11 +332,9 @@
     };
 
     var drawSmallCircleAtAngle = function (angle, radius, color, ctx) {
-        var radians = getRadians(angle);
-        var x = radius * Math.cos(radians) + centerX;
-        var y = radius * Math.sin(radians) + centerY + offsetCircleBar;
+        var position = getPositionByAngle(angle, radius, centerX, centerY + offsetCircleBar);
 
-        drawSmallCircle(x, y, color, ctx);
+        drawSmallCircle(position, color, ctx);
     };
 
     var drawLever = function (ctx) {
@@ -377,19 +369,15 @@
         }
 
 
-        var offsetCirclesRatio = rBig - rSmall;
-
-        var centerOffset;
+        var centerOffset = ((rBig - rSmall) * 2) + diamSmall;
 
         // draw red circles
         for (i = 0; i <= 3; i++) {
-            centerOffset = (offsetCirclesRatio * (2 * i)) + (diamSmall * i);
-            drawSmallCirclesLine(i, centerOffset, offsetCircles['c' + i], ctx);
+            drawSmallCirclesLine(i, centerOffset * i, offsetCircles['c' + i], ctx);
         }
 
-        centerOffset = (offsetCirclesRatio * (2 * 4)) + (diamSmall * 4);
-        drawSmallCirclesOnBar(centerOffset, ctx);
-
+        // draw circles on bar
+        drawSmallCirclesOnBar(centerOffset * 4, ctx);
     };
 
     drawCanvas();
