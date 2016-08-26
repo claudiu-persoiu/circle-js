@@ -234,36 +234,45 @@
         return true;
     };
 
-    var disableClick = function () {
-        if (drag) {
+    var moveCircle = function (circleNumber) {
+        var angle = 360 / (circleNumber * 4);
 
-            if (typeof drag === "number") {
-                var nrElements = drag * 4;
-                var angle = 360 / nrElements;
+        var tmpDiff = Math.round(offsetCircles['c' + circleNumber] / angle);
 
-                var tmpDiff = Math.round(offsetCircles['c' + drag] / angle);
+        offsetCircles['c' + circleNumber] = (tmpDiff * angle) % 360;
 
-                offsetCircles['c' + drag] = (tmpDiff * angle) % 360;
+        resetCircleOffset(offsetCircles['c' + circleNumber], angle, circleNumber);
+        offsetCircles['c' + circleNumber] = 0;
+    };
 
-                resetCircleOffset(offsetCircles['c' + drag], angle, drag);
-                offsetCircles['c' + drag] = 0;
-            } else {
-                var absOffsetBar = Math.round(offsetBar / diamBig);
-                offsetBar = absOffsetBar * diamBig;
-                if (absOffsetBar !== prevOffsetBar) {
-                    resetBarOffset(absOffsetBar);
-                }
-                offsetCircleBar = 0;
-                prevOffsetBar = absOffsetBar;
-            }
-
-            drawCanvas();
-
-            drag = false;
-            canvas.onmousemove = null;
-
-            checkFinished();
+    var moveBar = function () {
+        var absOffsetBar = Math.round(offsetBar / diamBig);
+        offsetBar = absOffsetBar * diamBig;
+        if (absOffsetBar !== prevOffsetBar) {
+            resetBarOffset(absOffsetBar);
         }
+        offsetCircleBar = 0;
+        prevOffsetBar = absOffsetBar;
+    };
+
+    var disableClick = function () {
+        if (!drag) {
+            return;
+        }
+
+        if (typeof drag === "number") {
+            moveCircle(drag);
+        } else {
+            moveBar();
+        }
+
+        drawCanvas();
+
+        drag = false;
+        canvas.onmousemove = null;
+
+        checkFinished();
+
     };
 
     canvas.onmousedown = enableClick;
